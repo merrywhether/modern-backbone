@@ -29,7 +29,10 @@ class AppRouter extends Backbone.Router {
     this.footerView.render();
   }
   start() {
-    Backbone.history.start({pushState: true});
+    Backbone.history.start({
+      pushState: true,
+      root: '/modern-backbone/'
+    });
   }
   homeRedirect(options) {
     Backbone.history.navigate('', {trigger: true});

@@ -11,9 +11,9 @@
   "license": "ISC",
   "homepage": "https://github.com/merrywhether/modern-backbone",
   "scripts": {
-    "build": "browserify src/app.js -t babelify -t hbsfy -o dist/app.js",
-    "watch": "watchify src/app.js -v -d -t babelify -t hbsfy -o dist/app.js",
-    "start": "serve dist/ -p 8010",
+    "build": "browserify src/app.js -t babelify -t hbsfy -o modern-backbone/app.js",
+    "watch": "watchify src/app.js -v -d -t babelify -t hbsfy -o modern-backbone/app.js",
+    "start": "serve -p 8010",
     "dev": "npm run watch & npm run start"
   },
   "dependencies": {
