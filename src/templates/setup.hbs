@@ -1,0 +1,240 @@
+<div class="container">
+  <div class="row">
+
+    <div class="section">
+      <h3 class="orange-text">Setting Things Up</h3>
+      <p class="flow-text">
+        We're going to run through getting you set up. Most of this will be
+        pretty easy, but it will involve punching some stuff into a terminal.
+        I'll give (sometimes Mac-specific) terminal instructions for several
+        parts of this, but feel free to use other methods if you know them.
+      </p>
+    </div>
+
+    <div class="divider"></div>
+    <div class="section">
+      <h4 class="orange-text">Node</h4>
+      <p class="flow-text">
+        As mentioned in the tools part, you're going to need Node.
+        <a href="https://nodejs.org/download/">Node's download page</a> has
+        self-contained installers for various platforms. If you're on a Mac like
+        me, I highly recommend installing <a href="http://brew.sh">Homebrew</a>,
+        a Mac package manager. You can just paste
+      </p>
+      <div class="code">
+        <pre><code>ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"</code></pre>
+      </div>
+      <p class="flow-text">
+        into terminal and press enter to install it. Homebrew will come in handy
+        throughout your programming career, and will allow you to upgrade things
+        (like Node) very easily in the future. Once you have homebrew, you can just type
+      </p>
+      <div class="code">
+        <pre><code>brew install node</code></pre>
+      </div>
+      <p class="flow-text">
+        and you'll be all set.
+      </p>
+    </div>
+
+    <div class="divider"></div>
+    <div class="section">
+      <h4 class="orange-text">File Structure</h4>
+      <p class="flow-text">
+        Now we're going to set up the basic file structure for our project. Choose
+        the directory you're going to be doing the work in and create 2 folders:
+        <code>src</code> and <code>dist</code>. The <code>src</code> directory
+        will be where we write all of your JavaScript, and <code>dist</code> will
+        be where we put our static assets (like HTML and CSS) and will be the
+        destination for our JavaScript bundle file.
+      </p>
+      <div class="code">
+        <pre><code>mkdir src dist</code></pre>
+      </div>
+      <p class="flow-text">
+        Then we need 3 files: <code>app.js</code> in the <code>src</code>
+        directory and <code>index.html</code> and <code>style.css</code> in the
+        <code>dist</code> directory. This is setting up the basic files and
+        locations we will be using.
+      </p>
+      <div class="code">
+        <pre><code>touch src/app.js dist/{index.html,style.css}</code></pre>
+      </div>
+      <p class="flow-text">
+        When you're done, your file structure should look like:
+      </p>
+      <div class="code">
+        <pre><code>project-directory/
+|--dist/
+|----index.html
+|----style.css
+|--src/
+|----app.js</code></pre>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="section">
+      <h4 class="orange-text">NPM Init</h4>
+      <p class="flow-text">
+        Now we need to tell NPM to initialize a new project in our current
+        directory. You do this by running
+      </p>
+      <div class="code">
+        <pre><code>npm init</code></pre>
+      </div>
+      <p class="flow-text">
+        You can press enter to accept the defaults (the text in the parentheses
+        after the prompts) for most of the answers. To properly follow along with
+        this tutorial, you do need to make sure you use <code>app.js</code> at the
+        <code>entry point:</code> prompt. This process sets up npm's ability to
+        download packages and run scripts for you, which is going to be very
+        important for what we're trying to do. This will create a
+        <code>package.json</code> file, which is the config file associated with
+        the project.<br>
+        <span class="note">
+          NOTE: If you're setting up git for this project, you're going to want
+          to add <code>node_modules/</code> to your <code>.gitignore</code>
+          file. That is the directory to which npm will download packages, and
+          you don't want to commit those to your repo.
+        </span>
+      </p>
+    </div>
+
+    <div class="divider"></div>
+    <div class="section">
+      <h4 class="orange-text">Installing Packages</h4>
+      <p class="flow-text">
+        Next up is installing the necessary packages, which is the payoff for all
+        the work we've done so far. Getting your packages from NPM allows for easy
+        upgrades in the future, and makes it easy to tell exactly which version
+        of a given package you are working with. Run the following commands:
+      </p>
+      <div class="code"><pre><code>npm install jquery handlebars backbone@1.2.0 underscore@1.8.3 --save
+npm install browserify watchify babelify serve hbsfy --save-dev</code></pre></div>
+      <p class="flow-text">
+        The <code>npm install</code> command tells NPM to go to its remote package
+        store and find everything you've sent its way. You can specify any number
+        of packages, and if you want to specifiy specific versions you can do that
+        (that's what the <code>backbone@1.2.0</code> is about). I've specified
+        versions for backbone and underscore in order to help Browserify make a
+        slightly smaller bundle (has to do with version matching on import), but
+        everything would've been fine without that. Adding <code>--save</code>
+        and <code>--save-dev</code> causes NPM to add entries in the
+        <code>dependencies</code> and <code>devDependencies</code> sections of
+        <code>package.json</code>, making it so you can quickly recreate this
+        environment somewhere else just by running <code>npm install</code>.
+      </p>
+    </div>
+
+    <div class="divider"></div>
+    <div class="section">
+      <h4 class="orange-text">Adding Dev Scripts</h4>
+      <p class="flow-text">
+        One of the nice parts of NPM is the ability to add custom "scripts" to
+        <code>package.json</code>, which are basically shortcuts to various
+        functionality. We're going to set up 4 scripts.
+      </p>
+      <p class="flow-text">
+        The first of these is the <code>build</code> script, which will use
+        Browserify to take all of our JavaScript files, bundle them up, and run
+        them through Babelify to convert them to the ES5 format that current
+        browsers support. It will also take all of our Handlebars templates and
+        run them through HBSfy to make them available to Backbone and improve
+        client-side performance.
+      </p>
+      <div class="code">
+        <pre><code>"build": "browserify src/app.js -t babelify -t hbsfy -o dist/app.js"</code></pre>
+      </div>
+      <p class="flow-text">
+        <code>build</code> is the nickname we're giving this function. We invoke
+        Browserify, passing in the top-level file (<code>src/app.js</code>). The
+        <code>-t</code> argument tells Browserify to use something as a transform;
+        in this case, we're using both Babelify and HBSfy. The <code>-o</code>
+        argument tells Browserify where we want the output to go:
+        <code>dist/app.js</code>. This means it will be creating or overwriting a
+        file in that location.
+      </p>
+      <p class="flow-text">
+        The build script will only run on command, and is what we'll use for the
+        final distributed output (now you know where <code>dist</code> came from),
+        but running manually on every change would be annoying, so we're going to
+        use Watchify while we're actually developing, which will rebuild on every
+        save. Here's the script for that:
+      </p>
+      <div class="code">
+        <pre><code>"watch": "watchify src/app.js -v -d -t babelify -t hbsfy -o dist/app.js"</code></pre>
+      </div>
+      <p class="flow-text">
+        This is mostly similar to the last one, with two extra arguments.
+        <code>-v</code> tells Browserify to be verbose, meaning it prints to the
+        terminal every time it rewrires the files. This is useful for seeing if
+        an error has occured in the write process. <code>-d</code> tells
+        Browserify to be in debug mode, meaning it includes a sourcemap, which
+        allows your browser to map sections of the huge JavaScript to their
+        original files, making it much easier to figure out where any browser
+        console errors are actually coming from. We wouldn't want these in
+        production necessarily, but they are both very useful in development.
+      </p>
+      <p class="flow-text">
+        The next script just starts the Serve file server in our <code>dist</code>
+        directory, allowing you mimic a live site in your browser. The
+        <code>-p</code> argument tells Serve to run on port 8010.
+      </p>
+      <div class="code">
+        <pre><code>"start": "serve dist/ -p 8010"</code></pre>
+      </div>
+      <p class="flow-text">
+        The last script is just a mashup of 2 other scripts, intended for
+        convenience.
+      </p>
+      <div class="code">
+        <pre><code>"dev": "npm run watch & npm run start"</code></pre>
+      </div>
+      <p class="flow-text">
+        This will run both the <code>watch</code> and <code>start</code> scripts
+        simultaneously, which is exactly what we'll want to do while we work.
+      </p>
+      <p class="flow-text">
+        You're probably wondering what to do with all of these scripts at this
+        point. Well, they go in the <code>package.json</code> file (following
+        proper JSON formatting, meaning no comma on the last item) like this:
+      </p>
+      <div class="code"><pre><code>...
+"scripts": {
+  "build": "browserify src/app.js -t babelify -t hbsfy -o dist/app.js",
+  "watch": "watchify src/app.js -v -d -t babelify -t hbsfy -o dist/app.js",
+  "start": "serve dist/ -p 8010",
+  "dev": "npm run watch &amp; npm run start"
+},
+...</code></pre></div>
+      <p class="flow-text">
+        Once they are in there, you'll be able to invoke any of them using the
+        <code>npm run script_nickname</code> command.
+      </p>
+    </div>
+
+    <div class="divider"></div>
+    <div class="section">
+      <h4 class="orange-text">Get On With It Already...</h4>
+      <p class="flow-text">
+        Okay, that was a lot of terminal work, and I bet you're reading to see
+        some payoff to it all. Well, that's the end of the set-up! Next we're
+        going to actually start building things we can see.
+      </p>
+    </div>
+
+    <div class="row">
+      <div class="col s6 left-align">
+        <a href="home.html" class="flow-text article-nav">
+          <i class="mdi-navigation-arrow-back"></i> Home
+        </a>
+      </div>
+      <div class="col s6 right-align">
+        <a href="views.html" class="flow-text article-nav">
+          Routers &amp; Views <i class="mdi-navigation-arrow-forward"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

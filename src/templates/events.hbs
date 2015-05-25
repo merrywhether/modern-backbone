@@ -1,0 +1,422 @@
+<div class="container">
+  <div class="row">
+    <div class="section">
+      <h3 class="orange-text">Events &amp; Navigation</h3>
+      <p class="flow-text">
+        We've gotten several of the major parts done, but they don't yet do
+        anything. In order for navigation to work, we need to somehow connect
+        all the pieces of our application together. You might be tempted to
+        start importing everything into every file and then writing complicated
+        signalling logic, but this will become a maintenance nightmare (in
+        addition to being extremely complicated from the get-go). Instead, we're
+        going to use event-driven design to make it so that none of our pieces
+        need to know about each other in order to work together, making changes
+        really easy in the future! Then we'll hook into Backbone's navigation
+        system (sounds like a fancy car dashboard?) to create a real website.
+      </p>
+    </div>
+
+    <div class="divider"></div>
+    <div class="section">
+      <h4 class="orange-text">Making a Main View</h4>
+      <p class="flow-text">
+        In order to see our navigation, we're going to need somewhere to go, so
+        let's quickly whip up some Templates for the <code>main</code> element
+        of our site. In <code>src/templates/</code> create
+        <code>home.hbs</code>:
+      </p>
+      <div class="code">
+        <pre><code>&lt;div class="container"&gt;
+          Home page
+        &lt;/div&gt;</code></pre>
+      </div>
+      <p class="flow-text">
+        and <code>setup.hbs</code>:
+      </p>
+      <div class="code">
+        <pre><code>&lt;div class="container"&gt;
+          Set-up
+        &lt;/div&gt;</code></pre>
+      </div>
+      <p class="flow-text">
+        These will be the stub templates we use to show that navigation is
+        actually happening. The create a new <code>main.js</code> file in the
+        <code>src/</code> directory. We're going to need to import Backbone
+        again, in addition to the two templates we just created:
+      </p>
+      <div class="code">
+        <pre><code>let Backbone = require('backbone');
+
+let homeTemplate = require('./templates/home.hbs'),
+    setupTemplate = require('./templates/setup.hbs');</code></pre>
+      </div>
+      <p class="flow-text">
+        Now we're going to create a fancy <code>MainView</code> class that
+        dynamically uses different templates. Depending on the context, you
+        might instead use a different View entirely for the different routes
+        we're going to render with this <code>MainView</code> class, but that's
+        easy to imagine and I wanted to show you that you could use multiple
+        templates with the same view (they aren't hard-coded). We're going to
+        use a JS object as a Map, and switch to the approriate template
+        on-demand:
+      </p>
+      <div class="code">
+        <pre><code>class MainView extends Backbone.View {
+  templateMap() {
+    return {
+      'home': homeTemplate,
+      'setup': setupTemplate
+    };
+  }
+  updateTemplate(target) {
+    this.template = this.templateMap()[target];
+  }
+  render(target) {
+    this.updateTemplate(target);
+    this.$el.html(this.template());
+    return this;
+  }
+}</code></pre>
+      </div>
+      <p class="flow-text">
+        Then, to finish off this file, add:
+      </p>
+      <div class="code">
+        <pre><code>module.exports = MainView;</code></pre>
+      </div>
+      <p class="flow-text">
+        Back in <code>app.js</code>, we need to import the <code>MainView</code>
+        class as before, and then update our <code>initialize()</code> function.
+        We need to add a second route for our second possible page, and we need
+        to add and initialize our <code>MainView</code> property.
+      </p>
+      <div class="code">
+        <pre><code>initialize(options) {
+  super.initialize(options);
+  this.route('', 'home');
+  this.route('setup.html', 'setup');
+
+  this.headerView = new HeaderView({el: $('header')});
+  this.headerView.render();
+
+  this.mainView = new MainView({el: $('main')});
+
+  this.footerView = new FooterView({el: $('footer')});
+  this.footerView.render();
+}</code></pre>
+      </div>
+      <p class="flow-text">
+        Now we need corresponding (and real) methods (replacing our previous
+        <code>home()</code> with something actually useful):
+      </p>
+      <div class="code">
+        <pre><code>home(options) {
+  this.mainView.render('home');
+}
+setup(options) {
+  this.mainView.render('setup');
+}</code></pre>
+      </div>
+      <p class="flow-text">
+        Now each route will display it's own proper content (without navigation
+        yet, sadly). Refresh your browser and you should see the following:
+      </p>
+      <div>
+        <img class="responsive-img" src="img/6.png" alt="Homepage stub" />
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="section">
+      <h4 class="orange-text">The Downside of Static Hosting</h4>
+      <p class="flow-text">
+        Now if you try to go to <code>http://localhost:8010/setup.html</code>,
+        you'll just get an error from Serve, even though we've specified a route
+        in Backbone's router. This is because direct URL navigation also causes
+        a request to the server, and in this case there is no corresponding
+        page for the serve to return. Since we're using static hosting, we're
+        going to need to duplicate our <code>index.html</code> file into
+        another file called <code>setup.html</code>. We always want our Backbone
+        URLs to be servable by the server, so we have to do this little hack to
+        get things working properly. If we were using a dynamic host of some
+        type we'd just set all variations on a certain path to return the same
+        page, but no such luck here. After you duplicate the HTML file, loading
+        <code>/setup.html</code> should give you the following:
+      </p>
+      <div>
+        <img class="responsive-img" src="img/7.png" alt="Setup page by Backbone" />
+      </div>
+      <p class="flow-text">
+        Now, Backbone loads on each page, parses the URL and properly kicks off
+        its rendering (even if the rendering doesn't know how to highlight
+        active links). Now about that navigation...
+      </p>
+    </div>
+
+    <div class="divider"></div>
+    <div class="section">
+      <h4 class="orange-text">The Event Manager</h4>
+      <p class="flow-text">
+        In order for our loosely-coupled, event-driven architecture to work,
+        we're going to set up an event manager singleton. This will be the
+        single clearinghouse for all events, and different objects will
+        naively publish events to it and subscribe to events from it. Create a
+        file in our <code>src</code> directory called <code>events.js</code>.
+        Since Backbone already has its own events singleton (which we don't
+        want to interfere with), we're going to need Underscore to clone a copy
+        for ourselves:
+      </p>
+      <div class="code">
+        <pre><code>let _ = require('underscore'),
+    Backbone = require('backbone');
+
+let events = _.clone(Backbone.Events);
+
+module.exports = events;</code></pre>
+      </div>
+      <p class="flow-text">
+        That little bit of code will allow other objects to anonymously interact
+        using <code>trigger()</code> and <code>listenTo()</code> methods. Since
+        we're now switching to proper navigation, we can remove the hard-coded
+        <code>active</code> attribute on the home object in the
+        <code>FooterView</code> in <code>footer.js</code>. Next, we need to
+        import the event manager in the top of that file:
+      </p>
+      <div class="code">
+        <pre><code>let events = require('./events');</code></pre>
+      </div>
+      <p class="flow-text">
+        Now we're ready to start wiring things up for events! Starting with the
+        <code>NavItem</code> class, we're going to tell it to subscribe to the
+        <code>nav</code> event (we'll use the this particular event a lot) and
+        pass any instances of that event to the <code>toggleActive()</code>
+        method:
+      </p>
+      <div class="code">
+        <pre><code>initialize(options) {
+  super.initialize(options);
+  this.listenTo(events, 'nav', this.toggleActive);
+}</code></pre>
+      </div>
+      <p class="flow-text">
+        <code>toggleActive()</code> is going to check and see if this Model
+        represents the target of the navigation event, and set its
+        <code>active</code> attribute accordingly:
+      </p>
+      <div class="code">
+        <pre><code>toggleActive(target) {
+  if (this.get('target') == target) {
+    this.set({active: true});
+  } else {
+    this.set({active: false});
+  }
+}</code></pre>
+      </div>
+      <p class="flow-text">
+        Next up is the <code>NavItemView</code> class. We're going to delete the
+        <code>className()</code> method, because this class will be changing
+        with navigation and doesn't need to be set at instantiation (the only
+        time <code>className()</code> matters). Then we need to get it to
+        subscribe to an event, but it won't be from the event manager. Instead
+        it will be an event emitted by that View's Model itself! Yep, Backbone
+        uses event-driven design as well, which is why it has an event manger to
+        begin with. The event we care about is when the <code>active</code>
+        property on the model changes, which should cause the View to re-render:
+      </p>
+      <div class="code">
+        <pre><code>initialize(options) {
+  super.initialize(options);
+  this.listenTo(this.model, 'change:active', this.render);
+}</code></pre>
+      </div>
+      <p class="flow-text">
+        We also need to adjust <code>render()</code> to dynamically toggle the
+        <code>active</code> class based on the model's value, for which we'll
+        use some jQuery methods:
+      </p>
+      <div class="code">
+        <pre><code>render() {
+  this.$el.html(navItemViewTemplate(this.model.attributes));
+  if (this.model.get('active')) {
+    this.$el.addClass('active');
+  } else {
+    this.$el.removeClass('active');
+  }
+  return this;
+}</code></pre>
+      </div>
+      <p class="flow-text">
+        Load the home page again in your browser, and you should see the
+        highlighting is gone:
+      </p>
+      <div>
+        <img class="responsive-img" src="img/8.png" alt="Link highlighting is gone" />
+      </div>
+      <p class="flow-text">
+        This may seem like a step backwards, but we're actually getting close!
+        Hop on over to <code>app.js</code>, and import the events manager there
+        as well. Adjust the route methods to trigger <code>nav</code> events,
+        sending along an argument representing which navigation has happened
+        (events can carry paylods, which is really useful).
+      </p>
+      <div class="code">
+        <pre><code>home(options) {
+  events.trigger('nav', 'home');
+  this.mainView.render('home');
+}
+setup(options) {
+  events.trigger('nav', 'setup');
+  this.mainView.render('setup');
+}</code></pre>
+      </div>
+      <p class="flow-text">
+        Now try loading <code>/setup.html</code> and you should see the
+        following:
+      </p>
+      <div>
+        <img class="responsive-img" src="img/9.png" alt="Contextual Highlight Works" />
+      </div>
+      <p class="flow-text">
+        Now both pages should have proper contextual highlighting!
+      </p>
+    </div>
+
+    <div class="divider"></div>
+    <div class="section">
+      <h4 class="orange-text">What's That About Links?</h4>
+      <p class="flow-text">
+        Oh yeah, we started this whole ordeal trying to get the links to
+        actually navigate between the pages. All of this prep work along the way
+        was to make sure that when we did get there, all the interactive
+        functionality would work. Okay, I'll get on with it.
+      </p>
+      <p class="flow-text">
+        Back in <code>footer.js</code>, we need to add a UI event handler to the
+        <code>NavItemView</code> class. First we'll override the
+        <code>events()</code> method, which declares what UI events to which to
+        respond:
+      </p>
+      <div class="code">
+        <pre><code>events() {
+  return {
+    'click': 'navigate'
+  }
+}</code></pre>
+      </div>
+      <p class="flow-text">
+        This tells the View to delegate any click events to the View's
+        <code>navigate()</code> method, which looks like this:
+      </p>
+      <div class="code">
+        <pre><code>navigate(e) {
+  e.preventDefault();
+  Backbone.history.navigate(`${this.model.get('target')}.html`, {trigger: true});
+  window.scrollTo(0, 0);
+}</code></pre>
+      </div>
+      <p class="flow-text">
+        This bit of code accepts an event as an argument and tells it to
+        <code>preventDefault()</code>, which means it won't cause a browser
+        request and will instead stay inside Backbone. Next it tells Backbone to
+        navigate to a particluar destination, generated by using fancy ES6
+        string templating to build a string such as <code>setup.html</code>, and
+        the <code>{trigger: true}</code> bit tells Backbone to actually make the
+        navigation event happen (instead of just updating the URL). Then it
+        tells the browser to scroll to the top of the page, which is what you'd
+        expect from a normal link. Now you should be able to successfully
+        navigate from the home page to the setup page, but sadly you can't go
+        back the other direction. That's because the link is telling Backbone
+        to head to <code>home.html</code>, which it doesn't know anything about.
+        There are a couple of ways to solve this problem, but I wanted to show
+        you one last feature of Backbone: dynamic routes.
+      </p>
+    </div>
+
+
+    <div class="divider"></div>
+    <div class="section">
+      <h4 class="orange-text">Dynamic Routes</h4>
+      <p class="flow-text">
+        Backbone routes don't have to be plain strings. They can have optional
+        parts, catch-alls, even regular expressions. We're going to use a
+        catch-all to handle any strange URLs that make it in. Update the
+        router's <code>initialize()</code> method in <code>app.js</code> with
+        the new route:
+      </p>
+      <div class="code">
+        <pre><code>initialize(options) {
+  super.initialize(options);
+  this.route('*path', 'homeRedirect');
+  this.route('', 'home');
+  this.route('setup.html', 'setup');
+  ...
+}</code></pre>
+      </div>
+      <p class="flow-text">
+        That route will catch any routes not matched by the others and send them
+        to the <code>homeRedirect()</code> method on the router. Note that this
+        route needs to be placed at the top of the list, because Backbone routes
+        resolve from bottom to top (meaning if it was at the bottom no other
+        routes would ever get matched because it would match all of them). Now
+        add the <code>homeRedirect()</code> method:
+      </p>
+      <div class="code">
+        <pre><code>homeRedirect(options) {
+  Backbone.history.navigate('', {trigger: true});
+}</code></pre>
+      </div>
+      <p class="flow-text">
+        After that, navigation should work back and forth between the pages.
+        There's one last thing to button up: clicking on the topnav's logo.
+        Change the <code>HeaderView</code> in <code>header.js</code> to the
+        following:
+      </p>
+      <div class="code">
+        <pre><code>class HeaderView extends Backbone.View {
+  events() {
+    return {
+      'click a': 'navigate'
+    };
+  }
+  navigate(e) {
+    e.preventDefault();
+    Backbone.history.navigate('', {trigger: true});
+    window.scrollTo(0, 0);
+  }
+  render() {
+    this.$el.html(headerViewTemplate());
+    return this;
+  }
+}</code></pre>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="section">
+      <h4 class="orange-text">Never Thought We'd Get Here</h4>
+      <p class="flow-text">
+        We've spent a while together now, but now you have a pretty good idea
+        how to use Backbone, and how it looks in ES6. You've got the basis of a
+        client-side web app (make sure to check out the complete code on the
+        <a href="https://github.com/merrywhether/modern-backbone">GitHub
+        repo</a>). If you build on or adapt this, use the <code>build</code>
+        script to generate a production-ready version of the JS bundle, and then
+        copy everything in the dist folder up to your static host (or adapt it
+        to work on a dynamic host).
+      </p>
+      <p class="flow-text">
+        If you have any questions or suggestions, message me on
+        Twitter @ <a href="https://twitter.com/merrywhether_">merrywhether_</a>.
+        I hope you enjoyed this tutorial and got some cool ideas out of it!
+      </p>
+    </div>
+
+    <div class="row">
+      <div class="col s6 left-align">
+        <a href="models.html" class="flow-text article-nav">
+          <i class="mdi-navigation-arrow-back"></i> Models &amp; Collections
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

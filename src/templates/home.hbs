@@ -1,0 +1,170 @@
+<div class="container">
+  <div class="row">
+    <h2 class="red-text">Modern Backbone</h2>
+    <h4 class="orange-text right-align">Getting Started in 2015</h4>
+    <div class="divider"></div>
+    <p class="flow-text">
+      So much is changing in the landscape of web development these days.
+      JavaScript is about to get a major overhaul with the relase of EcmaScript6
+      (aka ES6 or ES2015 or whatever it's going by these days). Client-side
+      frameworks have taken off as users expect application experiences in their
+      browser. And development build tools have come to the JavaScript
+      ecosystem, allowing client-side developers to use the same package and
+      code management concepts that server-side languages use to maintain
+      sanity. All this comes together when JavaScript's popularity has never
+      been higher, and thus it can be bewildering trying to get started, because
+      there is so much to learn and so many different solutions to every
+      problem.
+    </p>
+    <p class="flow-text">
+      Given that, I'm going to show you one solution to setting yourself up for
+      success using all these modern tools. This is far from the only reasonable
+      solution, but all of these tools are very flexible (and not very
+      opinionated), so you can extend upon this base very easily. Growing upward
+      from this stack is easy once you understand what it does and what you have
+      to do for yourself, at which point you can make informed decisions about
+      what trade-offs you want to make with your tools. The major trade-off with
+      most of what we'll be using is that you have to do more of the work
+      yourself, which I think is perfect for learning!
+    </p>
+    <div class="divider"></div>
+    <div class="section">
+      <h4 class="orange-text">How This Will Work</h4>
+      <p class="flow-text">
+        In this tutorial, I'm going to show you how to build this very site. I
+        dog-fooded all of these tools so you'd have a clear target for where
+        this is all headed. It is step-by-step with code examples, explanations,
+        and screenshots to make this as easy-to-follow as possible. And you can
+        see the finished project at its
+        <a href="https://github.com/merrywhether/modern-backbone">github
+        repo</a>. This tutorial is going to spend most of its time on Backbone,
+        and will rely on exposing you the other tools as much as necessary to
+        get rolling. Backbone is the both the most complicated part, and the
+        most useful, but be forewarned that this won't be the most in-depth
+        guide to any of the non-Backbone tools. It's supposed to be your
+        jumping-off point so you can get something running and then dig deeper
+        in the areas that are most relevant to you.
+      </p>
+      <p class="flow-text">
+        I'm not going to go into the server-side of things, and so this site
+        will be capable of running on a static host, which is all that some
+        people will be using anyway. We will set up a local static dev server to
+        make things easy for us, and I'll talk about transitioning it to a
+        proper dynamic host at the end, but in the meantime there will be a
+        couple of small hacks along the way to make sure everything runs
+        smoothly.
+      </p>
+    </div>
+    <div class="divider"></div>
+    <div class="section">
+      <h4 class="orange-text">Which Tools</h4>
+      <p class="flow-text">
+        Here's a quick run-through of the tools I (and hopefully you!) will be
+        using in this demo:
+      </p>
+      <dl class="flow-text">
+        <dt>JavaScript, ES6 edition</dt>
+        <dd>
+          With the specification finalized, lots of devs have already switched
+          to writing ES6-compliant code, and it's great. You can learn more
+          about JavaScript and ES6 from the free book series
+          <a href="https://github.com/getify/You-Dont-Know-JS">You Don't Know
+          JavaScript</a>.
+        </dd>
+        <dt><a href="https://nodejs.org">Node and NPM</a></dt>
+        <dd>
+          Node is a JavaScript runtime for running JavaScript "on the server"
+          (aka as a system utility). We'll be focusing on NPM (Node Package
+          Manager) as a way to manage our client-side dependencies. More and
+          more client-side libraries are distributed on NPM (as opposed to
+          people downloading libraries and saving them directly into their
+          repositories), and it's great to see client-side JavaScript finally
+          treated like a proper programming language.
+        </dd>
+        <dt><a href="http://browserify.org">Browserify</a></dt>
+        <dd>
+          Browserify is a "build" tool that we will use to bundle all of our
+          custom JavaScript and all of our libraries into one big bundle. It
+          uses the Node-flavored version of CommonJS to do imports, which makes
+          for nice code organization. This goes hand-in-hand with using NPM to
+          retrieve scripts, and this bundling (aka "concatenation") can actually
+          improve mobile download speeds due to the way connection acceleration
+          works. Also, we will be using it to run some "transforms" on our
+          JavaScript. During the development cycle, we'll be accessing
+          Browserify via the <a href="https://github.com/substack/watchify">
+          Watchify variant</a>, which allows for automatic rebuilding of the
+          bundle whenever you save a file.
+        </dd>
+        <dt><a href="https://babeljs.io">Babel</a></dt>
+        <dd>
+          Babel is a JavaScript transpiler that turns ES6 (and beyond) code into
+          ES5 code, so that it will run in current browsers (though many browser
+          vendors have started implementing some ES6 functioanlity already).
+          They have a quick learning section of ES6 to show you the basics,
+          which makes the first bit of the transition from ES5 easier. We will
+          utilizing Babel via the <a href="https://github.com/babel/babelify">
+          Babelify plugin</a> for Browserify.
+        </dd>
+        <dt><a href="http://backbonejs.org/">Backbone</a></dt>
+        <dd>
+          As you might've guessed by now, we'll be using Backbone as our
+          client-side MVC JavaScript framework. It is a lightweight,
+          unopinionated framework that handles your data outside of the DOM and
+          allows for easy replacement of its various parts to suit your needs.
+        </dd>
+        <dt><a href="http://handlebarsjs.com/">Handlebars</a></dt>
+        <dd>
+          Handlebars is an HTML templating engine that allows for creation of
+          dynamic HTML fragments generating from passed-in JSON data. This will
+          generate all of our display code. We won't go deeply into all of its
+          capabilities, but you'll be set up to take it very far when you're
+          ready. We'll be utilizing it via the
+          <a href="https://github.com/epeli/node-hbsfy">HBSfy plugin</a> for
+          Browserify, which is a precompiler for the templates to improve
+          client-side performance.
+        </dd>
+        <dt>Other things</dt>
+        <dd>
+          We'll have a couple of other minor tools that aren't part of the main
+          tutorial, but come in handy:
+          <ul>
+            <li>
+              <a href="http://materializecss.com/">Materialize</a>: a CSS UI
+              library based on Google's Material Design.
+            </li>
+            <li>
+              <a href="http://jquery.com">jQuery</a>: a JavaScript DOM tool
+              (Backbone has some shortcuts that work great with jQuery and
+              jQuery-compatible libraries)
+            </li>
+            <li>
+              <a href="http://underscorejs.org">Underscore</a>: a JavaScript
+              functional utility language (comes bundled with Backbone, partly
+              because it's made by the same people)
+            </li>
+            <li>
+              <a href="https://github.com/tj/serve">Serve</a>: a Node file
+              server (so we can easily serve all of our content to the browser)
+            </li>
+        </dd>
+      </dl>
+    </div>
+    <div class="divider"></div>
+    <div class="section">
+      <h4 class="orange-text">Ready to Get Started?</h4>
+      <p class="flow-text">
+        With all that out of the way, let's get started. I made this tutorial
+        using a Mac, so it will be very straight forward for any Unix-type
+        system. Things might be a little weird on Windows, but I'm guessing it
+        should all be pretty smooth.
+      </p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col s6 offset-s6 right-align">
+      <a href="setup.html" class="flow-text article-nav">
+        Setting Things Up <i class="mdi-navigation-arrow-forward"></i>
+      </a>
+    </div>
+  </div>
+</div>

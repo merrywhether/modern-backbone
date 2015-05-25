@@ -1,0 +1,26 @@
+main {
+  margin-bottom: 100px;
+}
+
+.code,
+code {
+  background: #EEE;
+  border-radius: 5px;
+}
+
+pre {
+  margin: 5px;
+}
+
+p > code {
+  font-size: 0.75em;
+}
+
+.note {
+  font-size: 0.5em;
+}
+
+footer > div.navbar-fixed {
+  position: absolute;
+  bottom: 0;
+}
