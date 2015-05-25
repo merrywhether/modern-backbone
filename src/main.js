@@ -1,4 +1,5 @@
-let Backbone = require('backbone');
+let $ = require('jquery'),
+    Backbone = require('backbone');
 
 let homeTemplate = require('./templates/home.hbs'),
     setupTemplate = require('./templates/setup.hbs'),
@@ -23,7 +24,8 @@ class MainView extends Backbone.View {
   }
   navigate(e) {
     e.preventDefault();
-    Backbone.history.navigate(e.currentTarget.pathname, {trigger: true});
+    console.log(e);
+    Backbone.history.navigate($(e.currentTarget).data('target'), {trigger: true});
     window.scrollTo(0, 0);
   }
   updateTemplate(target) {
